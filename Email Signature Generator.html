@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SJSD Signature Generator</title>
+  <style>
+    /* ─── Base Typography & Layout ─── */
+    body {
+      font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #f4f6f8;
+      color: #333;
+      margin: 0;
+      padding: 20px;
+    }
+
+    h2 {
+      color: #00577C;
+      margin-bottom: 16px;
+      text-align: center;
+    }
+
+    /* ─── Form Styles ─── */
+    #sig-form {
+      display: grid;
+      margin-left: auto;
+      margin-right: auto;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      max-width: 800px;
+      background: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    #sig-form label {
+      display: flex;
+      flex-direction: column;
+      font-size: 14px;
+    }
+
+    #sig-form input,
+    #sig-form select {
+      margin-top: 6px;
+      padding: 8px 10px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+
+    .email-domain {
+      margin-top: 6px;
+      font-family: monospace;
+      color: #666;
+    }
+
+    /* ─── Buttons ─── */
+    .button-row {
+      grid-column: 1 / -1;
+      margin-top: 10px;
+      text-align: right;
+    }
+
+    .button-row button {
+      background: #009CA6;
+      color: #fff;
+      border: none;
+      padding: 10px 18px;
+      margin-left: 8px;
+      border-radius: 4px;
+      font-size: 14px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .button-row button:hover {
+      background: #007e88;
+    }
+
+    /* ─── Preview Panel ─── */
+    #signature-preview {
+      margin-top: 24px;
+      margin-left: auto;
+      margin-right: auto;
+      padding: 24px;
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      max-width: 800px;
+    }
+
+    #signature-preview table {
+      border-collapse: collapse;
+    }
+
+    #signature-preview td {
+      vertical-align: top;
+    }
+
+    /* Dynamic logo resizing */
+    #signature-preview .logo-cell {
+      width: 1%;
+      padding-right: 10px;
+    }
+
+    #signature-preview .logo-cell img {
+      display: block;
+      max-height: 100%;
+      width: auto;
+    }
+
+    .signature-content {
+      line-height: 1.4;
+      font-size: 14px;
+    }
+
+    .fullname {
+      font-size: 18px;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+
+    .firstname {
+      color: #009CA6;
+      font-weight: bold;
+    }
+
+    .lastname {
+      color: #7C6F66;
+      font-weight: bold;
+    }
+  </style>
+</head>
+
+<body>
+
+  <h2>SJSD Email Signature Generator</h2>
+
+  <!-- Hidden template with merge tags -->
+  <template id="sig-template">
+    <table cellpadding="0" cellspacing="0" border="0">
+      <tr>
+        <!-- Logo cell with dynamic resizing -->
+        <td class="logo-cell">
+          <img
+            src="data:image/png;base64,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"
+            alt="SJSD Logo">
+        </td>
+        <td style="padding-right:10px;">
+          <div style="width:2px; background:#7C6F66; height:100%;"></div>
+        </td>
+        <td>
+          <div class="signature-content">
+            <div class="fullname">
+              <span class="firstname">{{FirstName}}</span>
+              <span class="lastname">{{LastName}}</span>
+            </div>
+            <div>{{Position}}{{LocSeparator}}{{LocationName}}</div>
+            <div>{{Address}}</div>
+            <div>{{Email}}{{EmailSeparator}}{{Phone}}{{Extension}}</div>
+          </div>
+        </td>
+      </tr>
+    </table>
+  </template>
+
+  <!-- Form inputs -->
+  <form id="sig-form">
+    <label>Job Location
+      <select id="locationType">
+        <option value="school">School-Based Staff</option>
+        <option value="department">District Department</option>
+      </select>
+    </label>
+    <label id="schoolLabel" style="display: flex; flex-direction: column;">
+      Select School
+      <select id="locationNameSchool"></select>
+    </label>
+    <label id="deptLabel" style="display: none; flex-direction: column;">
+      Select Department
+      <select id="locationNameDept"></select>
+    </label>
+    <label>First Name
+      <input id="firstName" type="text" required>
+    </label>
+    <label>Last Name
+      <input id="lastName" type="text" required>
+    </label>
+    <label>Position Title
+      <input id="position" type="text" required>
+    </label>
+    <label>Email username
+      <input id="emailLocal" type="text" placeholder="e.g. johnsmith" required>
+      <span class="email-domain">@SJSD.K12.MO.US</span>
+    </label>
+    <label>Extension (optional)
+      <input id="extension" type="text" placeholder="e.g. 123">
+    </label>
+    <div class="button-row">
+      <button id="copyBtn">Copy Signature</button>
+      <!-- <button id="dlBtn">Download as Image</button> -->
+    </div>
+  </form>
+
+  <!-- Preview area -->
+  <div id="signature-preview"></div>
+
+  <!-- html2canvas for image export -->
+  <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+  <script>
+    // 1) Directory Data
+    const directory = {
+      schools: {
+        "High Schools": {
+          "Benton High School": {
+            LocationName: "Benton High School",
+            Address: "5655 S 4th St, St. Joseph, MO 64504",
+            Phone: "816.671.4030"
+          },
+          "Central High School": {
+            LocationName: "Central High School",
+            Address: "2602 Edmound St, St. Joseph, MO 64501",
+            Phone: "816.671.4080"
+          },
+          "Lafayette High School": {
+            LocationName: "Lafayette High School",
+            Address: "412 E Highland Ave, St. Joseph, MO 64505",
+            Phone: "816.671.4220"
+          }
+        },
+        "Middle Schools": {
+          // Middle Schools
+          "Bode Middle School": {
+            LocationName: "Bode Middle School",
+            Address: "720 North Noyes Blvd, St. Joseph, MO 64506",
+            Phone: "816.671.4050"
+          },
+          "Robidoux Middle School": {
+            LocationName: "Robidoux Middle School",
+            Address: "4212 St. Joseph Ave, St. Joseph, MO 64505",
+            Phone: "816.671.4350"
+          },
+          "Spring Garden Middle School": {
+            LocationName: "Spring Garden Middle School",
+            Address: "5802 S 22nd St, St. Joseph, MO 64503",
+            Phone: "816.671.4380"
+          },
+          "Truman Middle School": {
+            LocationName: "Truman Middle School",
+            Address: "3227 Olive St, St. Joseph, MO 64507",
+            Phone: "816.671.4400"
+          }
+        },
+        "Elementary Schools": {
+          "Bessie Ellison Elementary School": {
+            LocationName: "Bessie Ellison Elementary School",
+            Address: "45 SE 85th Rd, St Joseph, MO 64507",
+            Phone: "816.671.4120"
+          },
+          "Carden Park Elementary School": {
+            LocationName: "Carden Park Elementary School",
+            Address: "1510 Duncan St, St. Joseph, MO 64503",
+            Phone: "816.671.4160"
+          },
+          "Coleman Elementary School": {
+            LocationName: "Colman Elementary School",
+            Address: "3312 Beck Rd, St. Joseph, MO 64506",
+            Phone: "816.671.4100"
+          },
+          "Edison Elementary School": {
+            LocationName: "Edison Elementary School",
+            Address: "515 N 22nd St, St. Joseph, MO 64501",
+            Phone: "816.671.4110"
+          },
+          "Eugene Field Elementary School": {
+            LocationName: " Eugene Field Elementary School",
+            Address: "2602 Gene Field Rd, St. Joseph, MO 64506",
+            Phone: "816.671.4130"
+          },
+          "Hosea Elementary School": {
+            LocationName: "Hosea Elementary School",
+            Address: "6401 Gordon St, St. Joseph, MO 64504",
+            Phone: "816.671.4180"
+          },
+          "Hyde Elementary School": {
+            LocationName: "Hyde Elementary School",
+            Address: "509 Thompson St, St. Joseph, MO 64504",
+            Phone: "816.671.4210"
+          },
+          "Lindbergh Elementary School": {
+            LocationName: "Lindbergh Elementary School",
+            Address: "2812 St. Joseph Ave, St. Joseph, MO 64505",
+            Phone: "816.671.4250"
+          },
+          "Oak Grove Elementary School": {
+            LocationName: "Oak Grove Elementary School",
+            Address: "4901 Cook Rd, St. Joseph, MO 64505",
+            Phone: "816.671.4290"
+          },
+          "Parkway Elementary School": {
+            LocationName: "Parkway Elementary School",
+            Address: "2900 Duncan St, St. Joseph, MO 64507",
+            Phone: "816.671.4310"
+          },
+          "Pershing Elementary School": {
+            LocationName: "Pershing Elementary School",
+            Address: "2610 Blackwell Rd, St. Joseph, MO 64505",
+            Phone: "816.671.4320"
+          },
+          "Pickett Elementary School": {
+            LocationName: "Pickett Elementary School",
+            Address: "3923 Pickett Rd, St. Joseph, MO 64503",
+            Phone: "816.671.4330"
+          },
+          "Skaith Elementary School": {
+            LocationName: "Skaith Elemntary School",
+            Address: "4701 Schoolside Ln, St. Joseph, MO 64503",
+            Phone: "816.671.4370"
+          }
+        },
+        "Other Schools": {
+          "Hillyard Technical Center": {
+            LocationName: "Hillyard Technical Center",
+            Address: "3434 Faraon St, St. Joseph, MO 64506",
+            Phone: "816.671.4170"
+          },
+          "Lake Contrary Early Learning Center": {
+            LocationName: "Lake Contrary Early Learning Center",
+            Address: "1800 Alabama St, St. Joseph, MO 64504",
+            Phone: "816.671.4009"
+          },
+          "Mark Twain Early Learning Center": {
+            LocationName: "Mark Twain Early Learning Center",
+            Address: "705 S 31st St, St. Joseph, MO 64507",
+            Phone: "816.671.4270"
+          },
+          "Webster Learning Center": {
+            LocationName: "Webster Learning Center",
+            Address: "1211 N 18th St, St. Joseph, MO 64501",
+            Phone: "816.671.4072"
+          }
+        }
+      },
+      departments: {
+        "Academic Services": {
+          LocationName: "Academic Services",
+          Address: "1415 N 26th St, St. Joseph, MO 64506",
+          Phone: "816.671.4000"
+        },
+        "Business Office": {
+          LocationName: "Business Office",
+          Address: "1415 N 26th St, St. Joseph, MO 64506",
+          Phone: "816.671.4000"
+        },
+        "Communications": {
+          LocationName: "Communications",
+          Address: "1415 N 26th St, St. Joseph, MO 64506",
+          Phone: "816.671.4000"
+        },
+        "Counseling": {
+          LocationName: "Counseling",
+          Address: "1415 N 26th St, St. Joseph, MO 64506",
+          Phone: "816.671.4000"
+        },
+        "District Office": {
+          LocationName: "Disttrict Office",
+          Address: "1415 N 26th St, St. Joseph, MO 64506",
+          Phone: "816.671.4000"
+        },
+        "Health Services": {
+          LocationName: "Health Services",
+          Address: "1415 N 26th St, St. Joseph, MO 64506",
+          Phone: "816.671.4000"
+        },
+        "Human Resources": {
+          LocationName: "Human Resources",
+          Address: "1415 N 26th St, St. Joseph, MO 64506",
+          Phone: "816.671.4000"
+        },
+        "Nutrition Services": {
+          LocationName: "Nutrition Services",
+          Address: "1000 S 9th St, St. Joseph, MO 64503",
+          Phone: "816.671.4140"
+        },
+        "Operations": {
+          LocationName: "Operations",
+          Address: "1000 S 9th St, St. Joseph, MO 64503",
+          Phone: "816.671.4260"
+        },
+        "Special Programs": {
+          LocationName: "Special Programs",
+          Address: "1415 N 26th St, St. Joseph, MO 64506",
+          Phone: "816.671.4000"
+        },
+        "Student Services": {
+          LocationName: "Student Services",
+          Address: "1415 N 26th St, St. Joseph, MO 64506",
+          Phone: "816.671.4000"
+        },
+        "Technology Services": {
+          LocationName: "Technology Services",
+          Address: "3401 Renick St, St. Joseph MO 64507",
+          Phone: "816.671.4390"
+        }
+      }
+    };
+
+    // 2) Populate dropdowns from directory
+    function populateDropdowns() {
+      const schoolSelect = document.getElementById("locationNameSchool");
+      const deptSelect = document.getElementById("locationNameDept");
+
+      // Add default first option
+      schoolSelect.innerHTML = '<option value="" disabled selected>Select your school</option>';
+      deptSelect.innerHTML = '<option value="" disabled selected>Select your department</option>';
+
+      // Schools: Use optgroups
+      for (const category in directory.schools) {
+        const group = document.createElement("optgroup");
+        group.label = category;
+
+        for (const schoolName in directory.schools[category]) {
+          const opt = document.createElement("option");
+          opt.value = schoolName;
+          opt.text = schoolName;
+          group.appendChild(opt);
+        }
+
+        schoolSelect.appendChild(group);
+      }
+
+      // Departments: Flat list
+      for (const deptName in directory.departments) {
+        const opt = document.createElement("option");
+        opt.value = deptName;
+        opt.text = deptName;
+        deptSelect.appendChild(opt);
+      }
+    }
+
+    // 3) Template merge function
+    const template = document.getElementById("sig-template").innerHTML;
+    function mergeTemplate(tmpl, data) {
+      return tmpl.replace(/{{(.*?)}}/g, (_, key) => data[key.trim()] || "");
+    }
+
+    // 4) Render preview
+    function updatePreview() {
+      const fn = document.getElementById("firstName").value.trim();
+      const ln = document.getElementById("lastName").value.trim();
+      const pos = document.getElementById("position").value.trim();
+      const emailLocal = document.getElementById("emailLocal").value.trim();
+      const extRaw = document.getElementById("extension").value.trim();
+      const isSchool = document.getElementById("locationType").value === "school";
+      const locKey = isSchool
+        ? document.getElementById("locationNameSchool").value
+        : document.getElementById("locationNameDept").value;
+
+      // Toggle visibility of dropdowns
+      document.getElementById("schoolLabel").style.display = isSchool ? "flex" : "none";
+      document.getElementById("deptLabel").style.display = isSchool ? "none" : "flex";
+
+      // Get location data
+      let locData = null;
+      if (isSchool) {
+        for (const cat in directory.schools) {
+          if (directory.schools[cat][locKey]) {
+            locData = directory.schools[cat][locKey];
+            break;
+          }
+        }
+      } else {
+        locData = directory.departments[locKey];
+      }
+
+      // Format email
+      const domain = "@SJSD.K12.MO.US";
+      const email = emailLocal
+        ? emailLocal.toUpperCase().replace(new RegExp(domain.toUpperCase() + "$"), "") + domain
+        : "";
+
+      // Format extension
+      const ext = extRaw ? " x" + extRaw : "";
+
+      // Show/hide email domain hint
+      document.querySelector(".email-domain").style.display = emailLocal ? "inline" : "none";
+
+      // Separators
+      const hasLocation = locData?.LocationName?.trim();
+      const locSeparator = pos && hasLocation ? " | " : "";
+      const emailSeparator = email && locData?.Phone ? " | " : "";
+
+      // Build data object
+      const data = {
+        FirstName: fn.toUpperCase() || "",
+        LastName: ln.toUpperCase() || "",
+        Position: pos.toUpperCase() || "",
+        LocSeparator: locSeparator,
+        LocationName: hasLocation ? locData.LocationName.toUpperCase() : "",
+        Address: locData?.Address?.toUpperCase() || "",
+        Email: email,
+        Phone: locData?.Phone || "",
+        Extension: ext,
+        EmailSeparator: emailSeparator
+      };
+
+      document.getElementById("signature-preview").innerHTML =
+        mergeTemplate(template, data);
+    }
+
+
+
+    // 5) Copy & download
+    document.getElementById("copyBtn").onclick = e => {
+      e.preventDefault();
+      const range = document.createRange();
+      range.selectNode(document.getElementById("signature-preview"));
+      const sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(range);
+      document.execCommand("copy");
+      alert("Signature copied! Paste into your email settings.");
+    };
+
+    /*
+    document.getElementById("dlBtn").onclick = e => {
+      e.preventDefault();
+      html2canvas(document.getElementById("signature-preview")).then(canvas => {
+        const fn = document.getElementById("firstName").value.trim() || "First";
+        const ln = document.getElementById("lastName").value.trim() || "Last";
+        const safeFn = fn.replace(/\s+/g, "_"), safeLn = ln.replace(/\s+/g, "_");
+        const link = document.createElement("a");
+        link.download = `${safeFn}_${safeLn}_signature.png`;
+        link.href = canvas.toDataURL("image/png");
+        link.click();
+      });
+    };
+    */
+
+    // 6) Initialize
+    document.addEventListener("DOMContentLoaded", () => {
+      populateDropdowns();
+      updatePreview();
+      document.getElementById("sig-form").addEventListener("input", updatePreview);
+    });
+  </script>
+</body>
+
+</html>
