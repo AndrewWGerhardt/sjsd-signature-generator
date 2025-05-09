@@ -513,19 +513,14 @@
 
 
     // 5) Copy & download
-    document.getElementById("copyBtn").onclick = async (e) => {
-  e.preventDefault();
-  const preview = document.getElementById("signature-preview");
-
-  try {
-    await navigator.clipboard.writeText(preview.innerHTML);
-    alert("Signature copied! Paste into your email settings.");
-  } catch (err) {
-    alert("Unable to copy. Please try a manual copy (Ctrl+C).");
-    console.error("Clipboard copy failed:", err);
-  }
-};
-
+    document.getElementById("copyBtn").onclick = e => {
+      e.preventDefault();
+      const range = document.createRange();
+      range.selectNode(document.getElementById("signature-preview"));
+      const sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(range);
+      document.execCommand("copy");
+      alert("Signature copied! Paste into your email settings.");
+    };
 
     /*
     document.getElementById("dlBtn").onclick = e => {
