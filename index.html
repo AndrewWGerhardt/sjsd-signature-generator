@@ -513,6 +513,31 @@
 
 
     // 5) Copy & download
+    function copySignatureToClipboard() {
+  const signatureElement = document.getElementById('signaturePreview');
+  const tempContainer = document.createElement('div');
+  tempContainer.innerHTML = signatureElement.innerHTML;
+  tempContainer.style.position = 'absolute';
+  tempContainer.style.left = '-9999px';
+  document.body.appendChild(tempContainer);
+
+  const range = document.createRange();
+  range.selectNodeContents(tempContainer);
+
+  const selection = window.getSelection();
+  selection.removeAllRanges();
+  selection.addRange(range);
+
+  try {
+    document.execCommand('copy');
+    alert('Signature copied to clipboard!');
+  } catch (err) {
+    alert('Failed to copy. Please select and copy manually.');
+  }
+
+  document.body.removeChild(tempContainer);
+}
+
     document.getElementById("copyBtn").onclick = e => {
       e.preventDefault();
       const range = document.createRange();
